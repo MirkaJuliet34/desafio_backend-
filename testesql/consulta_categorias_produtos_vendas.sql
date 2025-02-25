@@ -1,78 +1,54 @@
---2.5 Consulta com JOIN e Filtragem
---Dadas as tabelas:
+/* 
+  Query: Listar produtos e categorias com mais de 100 unidades vendidas
+  Descrição: Esta query lista o nome da categoria, o nome do produto e a quantidade total vendida de cada produto.
+  Apenas categorias com mais de 100 unidades vendidas no total são incluídas nos resultados.
 
---products
+  Tabelas:
+  - categories: Contém informações sobre categorias de produtos.
+    - id (INT): Identificador único da categoria.
+    - name (VARCHAR): Nome da categoria.
+  - products: Contém informações sobre produtos.
+    - id (INT): Identificador único do produto.
+    - name (VARCHAR): Nome do produto.
+    - category_id (INT): Referência à categoria do produto.
+  - sales: Contém informações sobre as vendas.
+    - id (INT): Identificador único da venda.
+    - product_id (INT): Referência ao produto vendido.
+    - quantity (INT): Quantidade vendida.
 
---id (INT)
---name (VARCHAR)
---category_id (INT)
---categories
+  Lógica:
+  - Unimos as tabelas `categories`, `products` e `sales` usando JOINs para acessar os dados necessários.
+  - Calculamos a soma das quantidades vendidas (`SUM(s.quantity)`) para cada produto.
+  - Agrupamos os resultados por categoria e produto para calcular a quantidade total vendida.
+  - Filtramos apenas as categorias com mais de 100 unidades vendidas no total usando `HAVING`.
 
---id (INT)
---name (VARCHAR)
---sales
+  Considerações:
+  - Ignoramos linhas onde `quantity` é NULL, pois não contribuem para o total.
+  - Usamos COALESCE para lidar com possíveis valores nulos, garantindo que a query seja robusta.
 
---id (INT)
---product_id (INT)
---quantity (INT)
---Escreva uma query para listar o nome da categoria, o nome do produto e a quantidade total vendida de cada produto. Filtre apenas as categorias que possuem mais de 100 unidades vendidas no total.
+  Exemplo de saída:
+  | category_name | product_name | total_quantity_sold |
+  |---------------|--------------|---------------------|
+  | Roupas        | Camiseta     | 200                 |
+  | Roupas        | Calça Jeans  | 150                 |
+*/
 
-CREATE TABLE categories (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    category_id INT REFERENCES categories(id)
-);
-
-CREATE TABLE sales (
-    id SERIAL PRIMARY KEY,
-    product_id INT REFERENCES products(id),
-    quantity INT NOT NULL
-);
-
--- 2. Inserir dados de exemplo nas tabelas
-
--- Inserir categorias
-INSERT INTO categories (name) VALUES 
-('Eletrônicos'),
-('Roupas'),
-('Alimentos');
-
--- Inserir produtos
-INSERT INTO products (name, category_id) VALUES 
-('Smartphone', 1),
-('Notebook', 1),
-('Camiseta', 2),
-('Calça Jeans', 2),
-('Arroz', 3),
-('Feijão', 3);
-
--- Inserir vendas
-INSERT INTO sales (product_id, quantity) VALUES 
-(1, 50),  -- Smartphone
-(1, 60),  -- Smartphone
-(2, 30),  -- Notebook
-(3, 200), -- Camiseta
-(4, 150), -- Calça Jeans
-(5, 80),  -- Arroz
-(6, 70);  -- Feijão
-
--- 3. Executar a consulta com JOIN e filtragem
+-- Consulta principal
 SELECT 
     c.name AS category_name,
     p.name AS product_name,
-    SUM(s.quantity) AS total_quantity_sold
+    SUM(COALESCE(s.quantity, 0)) AS total_quantity_sold
 FROM 
     categories c
 JOIN 
     products p ON c.id = p.category_id
 JOIN 
     sales s ON p.id = s.product_id
+WHERE 
+    s.quantity IS NOT NULL -- Filtra linhas inválidas
 GROUP BY 
     c.name, p.name
 HAVING 
-    SUM(s.quantity) > 100;
+    SUM(COALESCE(s.quantity, 0)) > 100
+ORDER BY 
+    total_quantity_sold DESC; -- Ordena por quantidade vendida (opcional)
