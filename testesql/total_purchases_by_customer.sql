@@ -1,65 +1,50 @@
---2.4 Consulta com JOIN Simples
---Dadas as tabelas: orders
+/* 
+  Query: Listar clientes e o total de compras realizadas
+  Descrição: Esta query lista o nome dos clientes e o total de compras realizadas, ordenando pelo total de compras em ordem decrescente.
+  Apenas clientes que realizaram compras são incluídos nos resultados.
 
---id (INT)
---customer_id (INT)
---total (DECIMAL)
---customers
+  Tabelas:
+  - customers: Contém informações sobre os clientes.
+    - id (INT): Identificador único do cliente.
+    - name (VARCHAR): Nome do cliente.
+    - country (VARCHAR): País do cliente.
+  - orders: Contém informações sobre os pedidos.
+    - id (INT): Identificador único do pedido.
+    - customer_id (INT): Referência ao cliente que fez o pedido.
+    - total (DECIMAL): Valor total do pedido.
 
---id (INT)
---name (VARCHAR)
---country (VARCHAR)
---Escreva uma query para listar o nome dos clientes e o total de compras realizadas, ordenando pelo total de compras em ordem decrescente. Inclua apenas os clientes que realizaram compras.
+  Lógica:
+  - Unimos as tabelas `customers` e `orders` usando JOIN para acessar os dados necessários.
+  - Calculamos o total de compras (`SUM(o.total)`) para cada cliente.
+  - Agrupamos os resultados por cliente (`c.id`, `c.name`) para calcular o total de compras.
+  - Ordenamos os resultados por `total_purchases` em ordem decrescente.
+  - Filtramos implicitamente apenas os clientes que realizaram compras, pois usamos INNER JOIN.
 
--- Passo 1: Criar as tabelas
+  Considerações:
+  - Ignoramos linhas onde `total` é NULL, pois não contribuem para o total.
+  - Usamos COALESCE para lidar com possíveis valores nulos, garantindo que a query seja robusta.
 
--- Criar a tabela customers
-CREATE TABLE customers (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    country VARCHAR(50)
-);
+  Exemplo de saída:
+  | customer_name   | total_purchases |
+  |-----------------|-----------------|
+  | Maria Souza     | 400.00          |
+  | João Silva      | 350.00          |
+  | Carlos Almeida  | 50.00           |
+*/
 
--- Criar a tabela orders
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL,
-    total DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES customers(id)
-);
-
--- Passo 2: Inserir dados de exemplo
-
--- Inserir dados na tabela customers
-INSERT INTO customers (name, country) VALUES
-('João Silva', 'Brasil'),
-('Maria Souza', 'Portugal'),
-('Carlos Almeida', 'Espanha'),
-('Ana Oliveira', 'Brasil');
-
--- Inserir dados na tabela orders
-INSERT INTO orders (customer_id, total) VALUES
-(1, 150.00), -- João Silva
-(2, 300.00), -- Maria Souza
-(1, 200.00), -- João Silva
-(3, 50.00),  -- Carlos Almeida
-(2, 100.00); -- Maria Souza
-
--- Passo 3: Executar a query
-
--- Query: Listar o nome dos clientes e o total de compras realizadas, ordenando pelo total de compras em ordem decrescente.
--- Inclui apenas os clientes que realizaram compras.
-
+-- Consulta principal
 SELECT 
     c.name AS customer_name,
-    SUM(o.total) AS total_purchases
+    SUM(COALESCE(o.total, 0)) AS total_purchases
 FROM 
     customers c
 JOIN 
     orders o
 ON 
     c.id = o.customer_id
+WHERE 
+    o.total IS NOT NULL -- Filtra linhas inválidas
 GROUP BY 
     c.id, c.name
 ORDER BY 
-    total_purchases DESC;
+    total_purchases DESC; -- Ordena por total de compras
