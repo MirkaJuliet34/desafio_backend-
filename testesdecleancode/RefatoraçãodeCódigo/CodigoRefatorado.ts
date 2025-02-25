@@ -1,54 +1,113 @@
-// Definindo uma interface para garantir a tipagem correta dos itens
+/* 
+  Interface: Item
+  Descrição: Define a estrutura de um item com nome e preço.
+  Raciocínio:
+  - Usamos uma interface para garantir que todos os itens tenham as propriedades `name` e `price`.
+  - Isso melhora a segurança de tipos e facilita a compreensão do código.
+
+  Função: isExpensive
+  Descrição: Verifica se um item é caro (preço maior que 100).
+  Raciocínio:
+  - A função encapsula a lógica de verificação de preço, tornando-a reutilizável e clara.
+
+  Função: logExpensiveItem
+  Descrição: Imprime no console que um item é caro.
+  Raciocínio:
+  - A função separa a responsabilidade de exibir mensagens, melhorando a modularidade.
+
+  Função: processItems
+  Descrição: Processa uma lista de itens e imprime mensagens para os itens caros.
+  Raciocínio:
+  - A função principal delega tarefas específicas para funções auxiliares, seguindo o princípio da responsabilidade única.
+  - O uso de `forEach` elimina a necessidade de gerenciar índices manualmente.
+
+  Exemplo:
+  const items = [
+      { name: "Laptop", price: 1200 },
+      { name: "Mouse", price: 20 },
+      { name: "Smartphone", price: 800 },
+  ];
+  processItems(items);
+  // Saída esperada:
+  // Laptop is expensive
+  // Smartphone is expensive
+*/
+
+// Interface para definir a estrutura dos itens
 interface Item {
     name: string;
     price: number;
-  }
-  
-  // Função para verificar se um item é caro
-  function isExpensive(item: Item): boolean {
+}
+
+// Função para verificar se um item é caro
+function isExpensive(item: Item): boolean {
     return item.price > 100;
-  }
-  
-  // Função para imprimir mensagens sobre itens caros
-  function logExpensiveItem(item: Item): void {
+}
+
+// Função para imprimir mensagens sobre itens caros
+function logExpensiveItem(item: Item): void {
     console.log(`${item.name} is expensive`);
-  }
-  
-  // Função principal para processar os itens
-  function processItems(items: Item[]): void { // Errol por causa da função duplicada
+}
+
+// Função principal para processar os itens
+function processItems(items: Item[]): void {
+    // Validação básica
+    if (!Array.isArray(items)) {
+        throw new Error("Erro: A entrada deve ser uma lista de itens.");
+    }
+
     items.forEach((item) => {
-      if (isExpensive(item)) {
-        logExpensiveItem(item);
-      }
+        // Garante que o item siga a interface Item
+        if (typeof item.name !== "string" || typeof item.price !== "number") {
+            throw new Error(`Erro: Item inválido encontrado: ${JSON.stringify(item)}`);
+        }
+
+        // Verifica se o item é caro e imprime a mensagem
+        if (isExpensive(item)) {
+            logExpensiveItem(item);
+        }
     });
-  }
+}
 
+// Teste 1: Caso básico
+const items1 = [
+    { name: "Laptop", price: 1200 },
+    { name: "Mouse", price: 20 },
+    { name: "Smartphone", price: 800 },
+];
+console.log("Resultado 1:");
+processItems(items1);
+// Saída esperada:
+// Laptop is expensive
+// Smartphone is expensive
 
-   /* Problemas identificados:
-- Uso de any[]: O tipo any é muito genérico e não oferece segurança de tipos. Devemos usar uma interface ou tipo explícito para descrever a estrutura dos itens.
-- Iteração manual: O uso de um loop for com índice (i) pode ser substituído por métodos mais modernos e expressivos, como forEach.
-- Concatenação de strings: A concatenação de strings usando + pode ser substituída por template literals para maior legibilidade.
-- Responsabilidade única: A função faz duas coisas: verifica se o item é caro e imprime no console. Podemos separar essas responsabilidades.
-- Nomes pouco descritivos: O nome da função (processItems) é genérico e não indica claramente o que ela faz.
- */
+// Teste 2: Lista vazia
+const items2: Item[] = [];
+console.log("Resultado 2:");
+processItems(items2); // Saída esperada: Nenhuma mensagem
 
-  /*Melhorias
-- Tipagem Explícita com Interface (Item):
-  --> Criamos uma interface Item para definir a estrutura esperada dos objetos na lista. Isso melhora a segurança de tipos e facilita a compreensão do código.
-- Separação de Responsabilidades:
-  --> Dividimos a lógica em funções menores e específicas:
-      - isExpensive: Verifica se um item é caro.
-      - logExpensiveItem: Imprime a mensagem no console.
-  --> Isso torna o código mais modular e reutilizável.
-- Uso de Métodos Modernos (forEach):
-  --> Substituímos o loop for por forEach, que é mais expressivo e elimina a necessidade de gerenciar índices manualmente.
-- Template Literals:
-  --> Usamos template literals (${}) para concatenar strings, o que melhora a legibilidade.
-- Nomes Descritivos:
-  --> Renomeamos as funções para refletir melhor suas responsabilidades, como isExpensive e logExpensiveItem. */
+// Teste 3: Lista sem itens caros
+const items3 = [
+    { name: "Notebook", price: 50 },
+    { name: "Teclado", price: 30 },
+];
+console.log("Resultado 3:");
+processItems(items3); // Saída esperada: Nenhuma mensagem
 
-  /*Benefícios do Código Refatorado
-- Legibilidade: O código é mais fácil de ler e entender.
-- Manutenção: Alterações futuras são mais simples, pois cada função tem uma responsabilidade clara.
-- Reutilização: As funções isExpensive e logExpensiveItem podem ser reutilizadas em outros contextos.
-- Segurança de Tipos: A interface Item garante que os dados tenham a estrutura correta, reduzindo erros em tempo de execução. */
+// Teste 4: Caso inválido (entrada não é uma lista)
+try {
+    const invalidInput = "não é uma lista";
+    console.log(processItems(invalidInput as any));
+} catch (error) {
+    console.error("Erro:", error.message); // Saída esperada: Erro: A entrada deve ser uma lista de itens.
+}
+
+// Teste 5: Caso inválido (item inválido)
+try {
+    const invalidItems = [
+        { name: "Monitor", price: "caro" }, // Preço inválido
+    ];
+    console.log(processItems(invalidItems as any));
+} catch (error) {
+    console.error("Erro:", error.message); // Saída esperada: Erro: Item inválido encontrado.
+}
